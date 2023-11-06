@@ -165,6 +165,8 @@ HighsInt Highs_deleteRowsBySet(
 HighsInt Highs_deleteColsBySet(
     void* highs, const HighsInt num_set_entries, const HighsInt* set
 );
+HighsInt Highs_passRowName(const void* highs, const HighsInt row, const char* name);
+HighsInt Highs_passColName(const void* highs, const HighsInt col, const char* name);
 """
 
 if has_highs:
@@ -294,6 +296,8 @@ class SolverHighs(mip.Solver):
         col: int = self.num_cols()
         check(self._lib.Highs_addVar(self._model, lb, ub))
         check(self._lib.Highs_changeColCost(self._model, col, obj))
+        col_name = ffi.new("char[]", name.encode("utf-8"))
+        check(self._lib.Highs_passColName(self._model, col, col_name))
         if var_type != mip.CONTINUOUS:
             check(
                 self._lib.Highs_changeColIntegrality(
@@ -337,6 +341,8 @@ class SolverHighs(mip.Solver):
         # store name
         self._cons_name.append(name)
         self._cons_col[name] = row
+        row_name = ffi.new("char[]", name.encode("utf-8"))
+        check(self._lib.Highs_passRowName(self._model, row, row_name))
 
     def add_lazy_constr(self: "SolverHighs", lin_expr: "mip.LinExpr"):
         raise NotImplementedError("HiGHS doesn't support lazy constraints!")
